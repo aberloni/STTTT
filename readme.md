@@ -12,24 +12,47 @@ A quick project to handle SPEECH (microphone) to TEXT to TRANSLATION (text)
 
 # Dependencies
 
+Python 			: I used 3.11.9
 STT 			: Google Speech (AI)	(paid service)
 
 # Libs
 
-Translation 	: googletrans 			(free somehow ?)
+Speech					: google speech lib
+Audio					: pyaudio				(free)
+Translation 			: googletrans 			(free somehow ?)
 
-# How to install/use
+# How to install
 
 - You'll need a google project https://console.cloud.google.com
 - Activate the Speech to text API (require a credit card)
-- Install google cloud CLI https://cloud.google.com/sdk/docs/install
+- Install google cloud CLI
+	windows installer : https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe
+
+In powershell/bash
+
+	pip install --upgrade google-cloud-speech
+	pip install pyaudio
+	pip install googletrans
 
 In gcloud CLI
 
 	gcloud init
 
-- Set conf file stuff to your liking
-- Run this python script
+- login (it will open a browser)
+- pick your project (the ID is the one you can find on the project picker on console.cloud.google.com)
+
+	gcloud auth application-default login
+
+# How to use
+
+- Setup the conf file :
+
+AUDIO_DEVICE_INDEX 	: Find the right index of the microphone you wanna use. You can run the util script that will list devices available.
+LANG 				: Input language for STT transcription
+LANG_TRANSL_SRC 	: Source language for translation
+LANG_TRANSL_DEST 	: Destination language for translation
+
+- Run main.py
 
 # Documentations 
 
@@ -48,3 +71,12 @@ https://py-googletrans.readthedocs.io/en/latest/
 **gcloud init**
 
 https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment
+
+
+# Troubleshoot
+
+	google.auth.exceptions.DefaultCredentialsError: Your default credentials were not found
+
+need to auth using gcloud cli
+
+	gcloud auth application-default login

@@ -49,6 +49,7 @@ class MicrophoneStream:
             # This is necessary so that the input device's buffer doesn't
             # overflow while the calling thread makes network requests, etc.
             stream_callback=self._fill_buffer,
+            input_device_index=conf.AUDIO_DEVICE_INDEX
         )
 
         print("[audio]")
@@ -202,7 +203,9 @@ def listen_print_loop(responses: object) -> str:
 
 async def TranslateText(line):
     async with googletrans.Translator() as tr:
-        loca = await tr.translate(text=line, src=googletrans.LANGUAGES["en"], dest=googletrans.LANGUAGES["fr"])
+        loca = await tr.translate(text=line, 
+                                  src=googletrans.LANGUAGES[conf.LANG_TRANSL_SRC], 
+                                  dest=googletrans.LANGUAGES[conf.LANG_TRANSL_DEST])
 
         print(" >"+loca.text)
         
