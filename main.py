@@ -24,10 +24,13 @@ output_translated = today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
 
 # current line qty in file
 lineHead = 0
-with open(output_raw, "r") as f:
+with open(output_raw, "a+", encoding="utf-8") as f:
     lines = f.readlines()
     lineHead = len(lines) - 1
     if lineHead < 0 : lineHead = 0
+    f.close()
+
+open(output_translated, "a+", encoding="utf-8").close()
 
 print("head @ "+str(lineHead))
 
@@ -217,7 +220,7 @@ def transcriptOverride(fname, line, lineIndex):
     if len(line) <= 0:
         return
 
-    with open(fname, "r") as f:
+    with open(fname, "r", encoding="utf-8") as f:
         lines = f.readlines()
         f.close()
 
@@ -226,7 +229,7 @@ def transcriptOverride(fname, line, lineIndex):
     
     lines[lineIndex] = line + "\n"
     
-    with open(fname, "w") as f:
+    with open(fname, "w", encoding="utf-8") as f:
         
         f.writelines(lines)
         f.close()

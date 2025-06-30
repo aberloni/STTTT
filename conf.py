@@ -46,3 +46,6 @@ AUDIO_DEVICE_INDEX = 2
 
 # ONLY for EN
 # latest_long : Best for long form content like media or conversation.
+
+# googletrans result is unicode utf-8
+# https://py-googletrans.readthedocs.io/en/latest/
