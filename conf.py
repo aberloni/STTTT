@@ -16,6 +16,8 @@ LANG_TRANSL_DEST = "fr"
 
 # https://py-googletrans.readthedocs.io/en/latest/#googletrans.models.Translated
 
+SPLIT_WORD_COUNT = 3
+
 # EXPORT FILES
 
 # where the text is appended

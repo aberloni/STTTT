@@ -52,7 +52,13 @@ LANG 				: Input language for STT transcription
 LANG_TRANSL_SRC 	: Source language for translation
 LANG_TRANSL_DEST 	: Destination language for translation
 
-- Run main.py
+- Run main.py (using python, in a terminal)
+
+*in python terminal*
+
+- [audio] when microphone starts
+- [listen] after first ping/pong with google
+- [exit] when script ends
 
 # Documentations 
 

@@ -6,7 +6,6 @@ import sys
 from google.cloud import speech
 
 import pyaudio
-import os
 
 import googletrans
 
@@ -22,6 +21,15 @@ import datetime
 today = datetime.datetime.today().strftime(conf.FILE_DATE_FORMAT)
 output_raw = today + "_" + conf.OUTPUT_RAW + conf.FILE_EXT
 output_translated = today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
+
+# current line qty in file
+lineHead = 0
+with open(output_raw, "r") as f:
+    lines = f.readlines()
+    lineHead = len(lines) - 1
+    if lineHead < 0 : lineHead = 0
+
+print("head @ "+str(lineHead))
 
 class MicrophoneStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
@@ -125,29 +133,13 @@ class MicrophoneStream:
 
             yield b"".join(data)
 
-
 def listen_print_loop(responses: object) -> str:
-    """Iterates through server responses and prints them.
-
-    The responses passed is a generator that will block until a response
-    is provided by the server.
-
-    Each response may contain multiple results, and each result may contain
-    multiple alternatives; for details, see https://goo.gl/tjCPAU.  Here we
-    print only the transcription for the top alternative of the top result.
-
-    In this case, responses are provided for interim results as well. If the
-    response is an interim one, print a line feed at the end of it, to allow
-    the next result to overwrite it, until the response is a final one. For the
-    final one, print a newline to preserve the finalized transcription.
-
-    Args:
-        responses: List of server responses
-
-    Returns:
-        The transcribed text.
-    """
+    
     num_chars_printed = 0
+    words_count = 0
+
+    global lineHead
+
     for response in responses:
         if not response.results:
             continue
@@ -171,15 +163,30 @@ def listen_print_loop(responses: object) -> str:
 
         if not result.is_final:
             
-            sys.stdout.write(transcript + overwrite_chars + "\r")
-            sys.stdout.flush()
+            line = transcript + overwrite_chars
+            #sys.stdout.write(line + "\r")
+            #sys.stdout.flush()
+
+            transcriptOverride(output_raw, line, lineHead)
 
             num_chars_printed = len(transcript)
 
-        else:
+            # translate every N words
+            sps = line.split()
+            cnt = len(sps)
+            if cnt > words_count:
+                if cnt % conf.SPLIT_WORD_COUNT == 0:
+                    words_count = cnt
+                    
+                    #print("count ? "+str(words_count)+" = "+line)
+
+                    asyncio.run(TranslateText(line, lineHead))
+                    
+        else: # FINAL
+
             #print(transcript + overwrite_chars)
             line = transcript + overwrite_chars
-            print(" >"+line)
+            print(".")
             
             if conf.CAN_STOP:
                 # Exit recognition if any of the transcribed phrases could be
@@ -191,41 +198,67 @@ def listen_print_loop(responses: object) -> str:
                     print("Exiting..")
                     break
             
-            with open(output_raw, "a") as output:
-                output.write(line + "\n")
+            transcriptOverride(output_raw, line, lineHead)
+            asyncio.run(TranslateText(line, lineHead))
             
-            asyncio.run(TranslateText(line))
+            lineHead = lineHead + 1
+            print(" >>> head @ "+str(lineHead))
             
+            words_count = 0
             num_chars_printed = 0
 
     return transcript
 
 
-async def TranslateText(line):
+def transcriptOverride(fname, line, lineIndex):
+
+    # remove empty spaces
+    line = line.strip()
+    if len(line) <= 0:
+        return
+
+    with open(fname, "r") as f:
+        lines = f.readlines()
+        f.close()
+
+    while len(lines) <= lineIndex:
+        lines.append("")
+    
+    lines[lineIndex] = line + "\n"
+    
+    with open(fname, "w") as f:
+        
+        f.writelines(lines)
+        f.close()
+
+
+async def TranslateText(line, lineIndex):
     async with googletrans.Translator() as tr:
         loca = await tr.translate(text=line, 
                                   src=googletrans.LANGUAGES[conf.LANG_TRANSL_SRC], 
                                   dest=googletrans.LANGUAGES[conf.LANG_TRANSL_DEST])
 
-        print(" >"+loca.text)
-        
-        with(open(output_translated, "a")) as outputTranslated:
-            outputTranslated.write(loca.text+"\n")
-                    
+        transcriptOverride(output_translated, loca.text, lineIndex)
+
 
 def main() -> None:
     """Transcribe speech from audio file."""
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     # language_code = "en-US"  # a BCP-47 language tag
-    language_code = conf.LANG
+    
+    # models:
+    # https://cloud.google.com/speech-to-text/docs/reference/rest/v1p1beta1/RecognitionConfig
+    
+    # https://cloud.google.com/speech-to-text/docs/speech-to-text-requests#select-model
 
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=conf.RATE,
-        language_code=language_code,
+        language_code=conf.LANG,
         model="latest_long",
+        #model="command_and_search",
     )
 
     streaming_config = speech.StreamingRecognitionConfig(
@@ -250,3 +283,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
