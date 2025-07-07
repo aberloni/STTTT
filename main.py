@@ -1,4 +1,3 @@
-
 import queue
 import re
 import sys
@@ -201,11 +200,13 @@ def listen_print_loop(responses: object) -> str:
                     print("Exiting..")
                     break
             
+            print("> "+line)
+            
             transcriptOverride(output_raw, line, lineHead)
             asyncio.run(TranslateText(line, lineHead))
             
             lineHead = lineHead + 1
-            print(" >>> head @ "+str(lineHead))
+            print("head @ "+str(lineHead))
             
             words_count = 0
             num_chars_printed = 0
