@@ -21,12 +21,23 @@ today = datetime.datetime.today().strftime(conf.FILE_DATE_FORMAT)
 output_raw = today + "_" + conf.OUTPUT_RAW + conf.FILE_EXT
 output_translated = today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
 
+# https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function
+print("raw file @ "+str(output_raw))
+
 # current line qty in file
 lineHead = 0
-with open(output_raw, "a+", encoding="utf-8") as f:
+with open(output_raw, "r", encoding="utf-8") as f:
     lines = f.readlines()
+
+    print(lines)
+
     lineHead = len(lines) - 1
-    if lineHead < 0 : lineHead = 0
+
+    if lineHead < 0 : 
+        lineHead = 0
+
+    print("head starts @ "+str(lineHead))
+
     f.close()
 
 open(output_translated, "a+", encoding="utf-8").close()

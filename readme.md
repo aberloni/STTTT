@@ -86,3 +86,7 @@ https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment
 need to auth using gcloud cli
 
 	gcloud auth application-default login
+
+Limitations
+
+	"Exceeded maximum allowed stream duration of 305 seconds."

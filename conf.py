@@ -37,7 +37,7 @@ STOP = "stop|exit"
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
-AUDIO_DEVICE_INDEX = 1
+AUDIO_DEVICE_INDEX = 2
 
 # NOTES
 
