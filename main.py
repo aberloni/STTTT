@@ -24,6 +24,9 @@ output_translated = today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
 # https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function
 print("raw file @ "+str(output_raw))
 
+with open(output_raw, "w") as f:
+    f.close()
+
 # current line qty in file
 lineHead = 0
 with open(output_raw, "r", encoding="utf-8") as f:

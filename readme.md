@@ -24,15 +24,42 @@ Translation 			: googletrans 			(free somehow ?)
 # How to install
 
 - You'll need a google project https://console.cloud.google.com
-- Activate the Speech to text API (require a credit card)
-- Install google cloud CLI
-	windows installer : https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe
+- Activate the Speech to text API (require a credit card) https://cloud.google.com/speech-to-text?hl=en
 
-In powershell/bash
+## Python & Pip
+	brew install python 
+	brew upgrade python
+	python3 -m pip install --upgrade pip
+
+## Dependencies libs
+
+(WINDOWS)
 
 	pip install --upgrade google-cloud-speech
 	pip install pyaudio
 	pip install googletrans
+
+(MACOS)
+
+	pip3 install --upgrade google-cloud-speech
+	brew install portaudio
+	pip3 install pyaudio
+	pip3 install googletrans
+
+# Install google cloud CLI
+
+(WINDOWS)
+
+	windows : https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe
+
+execute the installer
+
+(MACOS)
+
+download & install : https://cloud.google.com/sdk/docs/install-sdk
+
+	./google-cloud-sdk/install.sh
+	./google-cloud-sdk/bin/gcloud init
 
 In gcloud CLI
 
@@ -90,3 +117,7 @@ need to auth using gcloud cli
 Limitations
 
 	"Exceeded maximum allowed stream duration of 305 seconds."
+
+Installation issues
+
+macos & pyaudio : https://stackoverflow.com/questions/33851379/how-to-install-pyaudio-on-mac-using-python-3
