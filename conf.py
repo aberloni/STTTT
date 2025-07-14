@@ -25,7 +25,7 @@ OUTPUT_RAW = "output_raw"
 OUTPUT_TRANSLATED = "output_translated"
 
 FILE_DATE_FORMAT = "%Y-%m-%d"
-FILE_EXT = ".txt"
+FILE_EXT = ".peeps"
 
 # STOP detection
 

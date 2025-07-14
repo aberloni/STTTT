@@ -1,22 +1,26 @@
-import queue
 import re
-import sys
 
 from google.cloud import speech
-
-import pyaudio
 
 import googletrans
 
 import asyncio
 
 import conf
+import languages
+
+import streams
+import os
+
+import atexit
 
 # Audio recording parameters
 #RATE = 16000
 #CHUNK = int(RATE / 10)  # 100ms
 
+import time
 import datetime
+
 today = datetime.datetime.today().strftime(conf.FILE_DATE_FORMAT)
 output_raw = today + "_" + conf.OUTPUT_RAW + conf.FILE_EXT
 output_translated = today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
@@ -46,108 +50,6 @@ with open(output_raw, "r", encoding="utf-8") as f:
 open(output_translated, "a+", encoding="utf-8").close()
 
 print("head @ "+str(lineHead))
-
-class MicrophoneStream:
-    """Opens a recording stream as a generator yielding the audio chunks."""
-
-    def __init__(self: object, rate: int = conf.RATE, chunk: int = conf.CHUNK) -> None:
-        """The audio -- and generator -- is guaranteed to be on the main thread."""
-        self._rate = rate
-        self._chunk = chunk
-
-        # Create a thread-safe buffer of audio data
-        self._buff = queue.Queue()
-        self.closed = True
-
-    def __enter__(self: object) -> object:
-        self._audio_interface = pyaudio.PyAudio()
-        self._audio_stream = self._audio_interface.open(
-            format=pyaudio.paInt16,
-            # The API currently only supports 1-channel (mono) audio
-            # https://goo.gl/z757pE
-            channels=1,
-            rate=self._rate,
-            input=True,
-            frames_per_buffer=self._chunk,
-            # Run the audio stream asynchronously to fill the buffer object.
-            # This is necessary so that the input device's buffer doesn't
-            # overflow while the calling thread makes network requests, etc.
-            stream_callback=self._fill_buffer,
-            input_device_index=conf.AUDIO_DEVICE_INDEX
-        )
-
-        print("[audio]")
-        
-        self.closed = False
-
-        return self
-
-    def __exit__(
-        self: object,
-        type: object,
-        value: object,
-        traceback: object,
-    ) -> None:
-        """Closes the stream, regardless of whether the connection was lost or not."""
-        self._audio_stream.stop_stream()
-        self._audio_stream.close()
-        self.closed = True
-        # Signal the generator to terminate so that the client's
-        # streaming_recognize method will not block the process termination.
-        self._buff.put(None)
-        self._audio_interface.terminate()
-        print("[exit]")
-
-    def _fill_buffer(
-        self: object,
-        in_data: object,
-        frame_count: int,
-        time_info: object,
-        status_flags: object,
-    ) -> object:
-        """Continuously collect data from the audio stream, into the buffer.
-
-        Args:
-            in_data: The audio data as a bytes object
-            frame_count: The number of frames captured
-            time_info: The time information
-            status_flags: The status flags
-
-        Returns:
-            The audio data as a bytes object
-        """
-        self._buff.put(in_data)
-        return None, pyaudio.paContinue
-
-    def generator(self: object) -> object:
-        """Generates audio chunks from the stream of audio data in chunks.
-
-        Args:
-            self: The MicrophoneStream object
-
-        Returns:
-            A generator that outputs audio chunks.
-        """
-        while not self.closed:
-            # Use a blocking get() to ensure there's at least one chunk of
-            # data, and stop iteration if the chunk is None, indicating the
-            # end of the audio stream.
-            chunk = self._buff.get()
-            if chunk is None:
-                return
-            data = [chunk]
-
-            # Now consume whatever other data's still buffered.
-            while True:
-                try:
-                    chunk = self._buff.get(block=False)
-                    if chunk is None:
-                        return
-                    data.append(chunk)
-                except queue.Empty:
-                    break
-
-            yield b"".join(data)
 
 def listen_print_loop(responses: object) -> str:
     
@@ -253,13 +155,15 @@ def transcriptOverride(fname, line, lineIndex):
 async def TranslateText(line, lineIndex):
     async with googletrans.Translator() as tr:
         loca = await tr.translate(text=line, 
-                                  src=googletrans.LANGUAGES[conf.LANG_TRANSL_SRC], 
-                                  dest=googletrans.LANGUAGES[conf.LANG_TRANSL_DEST])
+                                  src=googletrans.LANGUAGES[languages.LANG_TRANSL_SRC], 
+                                  dest=googletrans.LANGUAGES[languages.LANG_TRANSL_DST])
 
         transcriptOverride(output_translated, loca.text, lineIndex)
 
+# "-> None" ? https://stackoverflow.com/questions/38286718/what-does-def-main-none-do
 
 def main() -> None:
+
     """Transcribe speech from audio file."""
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
@@ -274,7 +178,7 @@ def main() -> None:
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=conf.RATE,
-        language_code=conf.LANG,
+        language_code=languages.LANG,
         model="latest_long",
         #model="command_and_search",
     )
@@ -283,7 +187,9 @@ def main() -> None:
         config=config, interim_results=True
     )
 
-    with MicrophoneStream(conf.RATE, conf.CHUNK) as stream:
+    ScriptLockToggle(True)
+
+    with streams.MicrophoneStream(conf.RATE, conf.CHUNK) as stream:
         
         audio_generator = stream.generator()
         requests = (
@@ -293,12 +199,29 @@ def main() -> None:
 
         responses = client.streaming_recognize(streaming_config, requests)
 
-        print("[LISTEN]")
+        print("speech.listening")
         
+        #ScriptLockToggle(True)
+
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
 
 
+
+def ScriptLockToggle(state):
+    lockFileName = "lock" + conf.FILE_EXT
+    if state:
+        with open(lockFileName, "w") as f:
+            f.close()
+    else:
+        os.remove(lockFileName)
+
+
+# https://www.geeksforgeeks.org/python/detect-script-exit-in-python/
+@atexit.register
+def ApplicationQuit():
+    print("[QUIT]")
+    ScriptLockToggle(False)
+
 if __name__ == "__main__":
     main()
-

@@ -33,13 +33,13 @@ Translation 			: googletrans 			(free somehow ?)
 
 ## Dependencies libs
 
-(WINDOWS)
+WINDOWS
 
 	pip install --upgrade google-cloud-speech
 	pip install pyaudio
 	pip install googletrans
 
-(MACOS)
+OSX
 
 	pip3 install --upgrade google-cloud-speech
 	brew install portaudio
@@ -48,15 +48,15 @@ Translation 			: googletrans 			(free somehow ?)
 
 # Install google cloud CLI
 
-(WINDOWS)
+WINDOWS
 
 	windows : https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe
 
 execute the installer
 
-(MACOS)
+OSX
 
-download & install : https://cloud.google.com/sdk/docs/install-sdk
+download & run : https://cloud.google.com/sdk/docs/install-sdk
 
 	./google-cloud-sdk/install.sh
 	./google-cloud-sdk/bin/gcloud init
@@ -65,8 +65,9 @@ In gcloud CLI
 
 	gcloud init
 
-- login (it will open a browser)
-- pick your project (the ID is the one you can find on the project picker on console.cloud.google.com)
+
+- login (it will open a browser)  
+- pick your project (the ID is the one you can find on the project picker on console.cloud.google.com)  
 
 	gcloud auth application-default login
 
