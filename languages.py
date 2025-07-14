@@ -7,7 +7,7 @@
 
 # STT language target
 
-LANG = "fr-FR"
+LANG = "en-US"
 
 # TRANSLATION
 
@@ -16,5 +16,5 @@ LANG = "fr-FR"
 
 # https://py-googletrans.readthedocs.io/en/latest/#googletrans.models.Translated
 
-LANG_TRANSL_SRC = "fr"
-LANG_TRANSL_DST = "en"
+LANG_TRANSL_SRC = "en"
+LANG_TRANSL_DST = "fr"

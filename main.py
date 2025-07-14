@@ -57,8 +57,11 @@ def listen_print_loop(responses: object) -> str:
     words_count = 0
 
     global lineHead
+    
+    print("listen.start")
 
     for response in responses:
+
         if not response.results:
             continue
 
@@ -70,7 +73,8 @@ def listen_print_loop(responses: object) -> str:
             continue
 
         # Display the transcription of the top alternative.
-        transcript = result.alternatives[0].transcript
+        alt = result.alternatives[0]
+        transcript = alt.transcript
 
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
@@ -78,12 +82,15 @@ def listen_print_loop(responses: object) -> str:
         # If the previous result was longer than this one, we need to print
         # some extra spaces to overwrite the previous result
         overwrite_chars = " " * (num_chars_printed - len(transcript))
+        line = transcript + overwrite_chars
+        print(" > "+line)
+
+        # RESULT DOCUMENTATION
+        # https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative
 
         if not result.is_final:
             
-            line = transcript + overwrite_chars
-            #sys.stdout.write(line + "\r")
-            #sys.stdout.flush()
+            # print("x"+str(len(result.alternatives)) + " " + str(alt.confidence) + " > " + line)
 
             transcriptOverride(path_raw, line, lineHead)
 
@@ -97,15 +104,11 @@ def listen_print_loop(responses: object) -> str:
                     words_count = cnt
                     
                     #print("count ? "+str(words_count)+" = "+line)
-
+                    
                     asyncio.run(TranslateText(line, lineHead))
                     
         else: # FINAL
 
-            #print(transcript + overwrite_chars)
-            line = transcript + overwrite_chars
-            print(".")
-            
             if conf.CAN_STOP:
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
@@ -113,10 +116,16 @@ def listen_print_loop(responses: object) -> str:
                 stopped = re.search(r"("+pattern+")", transcript, re.I)
                 #if re.search(r"\b("+conf.STOP+")\b", transcript, re.I):
                 if stopped:
-                    print("Exiting..")
+                    
+                    print("[command.exit]")
+                    
+                    ApplicationQuit() # release lock
+
                     break
             
-            print("> "+line)
+            # didn't stop, yet
+
+            print(" . "+line) #is final !
             
             transcriptOverride(path_raw, line, lineHead)
             asyncio.run(TranslateText(line, lineHead))
@@ -127,6 +136,7 @@ def listen_print_loop(responses: object) -> str:
             words_count = 0
             num_chars_printed = 0
 
+    print("listen.stop")
     return transcript
 
 
@@ -169,9 +179,9 @@ def main() -> None:
     # for a list of supported languages.
     # language_code = "en-US"  # a BCP-47 language tag
     
-    # models:
     # https://cloud.google.com/speech-to-text/docs/reference/rest/v1p1beta1/RecognitionConfig
     
+    # models:
     # https://cloud.google.com/speech-to-text/docs/speech-to-text-requests#select-model
 
     client = speech.SpeechClient()
@@ -180,18 +190,26 @@ def main() -> None:
         sample_rate_hertz=conf.RATE,
         language_code=languages.LANG,
         model="latest_long",
+        #model="latest_short",
         #model="command_and_search",
     )
 
+    # Doc.StreamingRecognitionConfig
+    # https://cloud.google.com/python/docs/reference/speech/latest/google.cloud.speech_v1p1beta1.types.StreamingRecognitionConfig
+
     streaming_config = speech.StreamingRecognitionConfig(
-        config=config, interim_results=True
+        config=config, 
+        #single_utterance=True,
+        interim_results=True # If false or omitted, only is_final=true result(s) are returned. 
     )
 
+    # set lock
     ScriptLockToggle(True)
 
     with streams.MicrophoneStream(conf.RATE, conf.CHUNK) as stream:
         
-        audio_generator = stream.generator()
+        audio_generator = stream.generator() # while stream not closed
+
         requests = (
             speech.StreamingRecognizeRequest(audio_content=content)
             for content in audio_generator

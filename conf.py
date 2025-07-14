@@ -33,7 +33,7 @@ FILE_EXT = ".peeps"
 # STOP detection
 
 CAN_STOP = True
-STOP = "stop|exit"
+STOP = "stop|exit|quitter"
 
 # AUDIO
 
