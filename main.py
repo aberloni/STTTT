@@ -18,22 +18,22 @@ import atexit
 #RATE = 16000
 #CHUNK = int(RATE / 10)  # 100ms
 
-import time
 import datetime
 
 today = datetime.datetime.today().strftime(conf.FILE_DATE_FORMAT)
-output_raw = today + "_" + conf.OUTPUT_RAW + conf.FILE_EXT
-output_translated = today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
+
+path_raw = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_RAW + conf.FILE_EXT
+path_translated = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
 
 # https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function
-print("raw file @ "+str(output_raw))
+print("raw file @ "+str(path_raw))
 
-with open(output_raw, "w") as f:
+with open(path_raw, "w") as f:
     f.close()
 
 # current line qty in file
 lineHead = 0
-with open(output_raw, "r", encoding="utf-8") as f:
+with open(path_raw, "r", encoding="utf-8") as f:
     lines = f.readlines()
 
     print(lines)
@@ -47,7 +47,7 @@ with open(output_raw, "r", encoding="utf-8") as f:
 
     f.close()
 
-open(output_translated, "a+", encoding="utf-8").close()
+open(path_translated, "a+", encoding="utf-8").close()
 
 print("head @ "+str(lineHead))
 
@@ -85,7 +85,7 @@ def listen_print_loop(responses: object) -> str:
             #sys.stdout.write(line + "\r")
             #sys.stdout.flush()
 
-            transcriptOverride(output_raw, line, lineHead)
+            transcriptOverride(path_raw, line, lineHead)
 
             num_chars_printed = len(transcript)
 
@@ -118,7 +118,7 @@ def listen_print_loop(responses: object) -> str:
             
             print("> "+line)
             
-            transcriptOverride(output_raw, line, lineHead)
+            transcriptOverride(path_raw, line, lineHead)
             asyncio.run(TranslateText(line, lineHead))
             
             lineHead = lineHead + 1
@@ -158,7 +158,7 @@ async def TranslateText(line, lineIndex):
                                   src=googletrans.LANGUAGES[languages.LANG_TRANSL_SRC], 
                                   dest=googletrans.LANGUAGES[languages.LANG_TRANSL_DST])
 
-        transcriptOverride(output_translated, loca.text, lineIndex)
+        transcriptOverride(path_translated, loca.text, lineIndex)
 
 # "-> None" ? https://stackoverflow.com/questions/38286718/what-does-def-main-none-do
 

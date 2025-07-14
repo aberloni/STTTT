@@ -20,6 +20,9 @@ SPLIT_WORD_COUNT = 3
 
 # EXPORT FILES
 
+
+OUTPUT_FOLDER = "locals/"
+
 # where the text is appended
 OUTPUT_RAW = "output_raw"
 OUTPUT_TRANSLATED = "output_translated"
