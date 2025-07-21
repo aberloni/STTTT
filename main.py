@@ -29,8 +29,11 @@ path_translated = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_TRANSLATED + co
 print("raw file @ "+str(path_raw))
 
 # first wipe files &/OR make sure they exists
-open(path_raw, "w", encoding="utf-8").close()
-open(path_translated, "w", encoding="utf-8").close()
+with open(path_raw, "w", encoding="utf-8") as f:
+    f.close()
+
+with open(path_translated, "w", encoding="utf-8") as f:
+    f.close()
 
 # current line qty in file
 lineHead = 0
@@ -95,7 +98,7 @@ def listen_print_loop(responses: object) -> str:
         # https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative
 
         """ kill script is lock file is removed by something else """
-        if CheckLockPresence():
+        if not CheckLockPresence():
             print("/! script lock missing")
             ApplicationQuit()
             return
@@ -236,10 +239,12 @@ def main() -> None:
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
 
+""" true : lock is present """
 def CheckLockPresence():
     lockFileName = "lock" + conf.FILE_EXT
     return os.path.exists(lockFileName)
 
+""" toggle script lock """
 def ScriptLockToggle(state):
     lockFileName = "lock" + conf.FILE_EXT
     if state:
