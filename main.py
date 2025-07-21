@@ -28,8 +28,9 @@ path_translated = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_TRANSLATED + co
 # https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function
 print("raw file @ "+str(path_raw))
 
-with open(path_raw, "w") as f:
-    f.close()
+# first wipe files &/OR make sure they exists
+open(path_raw, "w", encoding="utf-8").close()
+open(path_translated, "w", encoding="utf-8").close()
 
 # current line qty in file
 lineHead = 0
@@ -51,6 +52,11 @@ open(path_translated, "a+", encoding="utf-8").close()
 
 print("head @ "+str(lineHead))
 
+""" 
+    given responses object is a StreamingResponseIterator
+    for loop will never end
+    and call each iteration when new content is added/available
+"""
 def listen_print_loop(responses: object) -> str:
     
     num_chars_printed = 0
@@ -59,12 +65,12 @@ def listen_print_loop(responses: object) -> str:
     global lineHead
     
     print("listen.start")
-
+    
     for response in responses:
 
         if not response.results:
             continue
-
+        
         # The `results` list is consecutive. For streaming, we only care about
         # the first result being considered, since once it's `is_final`, it
         # moves on to considering the next utterance.
@@ -87,6 +93,12 @@ def listen_print_loop(responses: object) -> str:
 
         # RESULT DOCUMENTATION
         # https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative
+
+        """ kill script is lock file is removed by something else """
+        if CheckLockPresence():
+            print("/! script lock missing")
+            ApplicationQuit()
+            return
 
         if not result.is_final:
             
@@ -224,22 +236,27 @@ def main() -> None:
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
 
-
+def CheckLockPresence():
+    lockFileName = "lock" + conf.FILE_EXT
+    return os.path.exists(lockFileName)
 
 def ScriptLockToggle(state):
     lockFileName = "lock" + conf.FILE_EXT
     if state:
-        with open(lockFileName, "w") as f:
-            f.close()
+        open(lockFileName, "w").close()
     else:
         os.remove(lockFileName)
+
+    print("lock:" + str(state))
 
 
 # https://www.geeksforgeeks.org/python/detect-script-exit-in-python/
 @atexit.register
 def ApplicationQuit():
     print("[QUIT]")
-    ScriptLockToggle(False)
+    
+    if CheckLockPresence():
+        ScriptLockToggle(False)
 
 if __name__ == "__main__":
     main()
