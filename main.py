@@ -58,6 +58,8 @@ open(path_translated, "a+", encoding="utf-8").close()
 
 print("head @ "+str(lineHead))
 
+print("audio.slot #"+str(conf.AUDIO_DEVICE_INDEX))
+
 """ 
     given responses object is a StreamingResponseIterator
     for loop will never end
