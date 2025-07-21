@@ -25,15 +25,18 @@ today = datetime.datetime.today().strftime(conf.FILE_DATE_FORMAT)
 path_raw = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_RAW + conf.FILE_EXT
 path_translated = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
 
+""" make sure file & parent folder exists """
+def FileSanity(path):
+    print("sanity check file @ "+path)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.close()
+
 # https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function
-print("raw file @ "+str(path_raw))
 
 # first wipe files &/OR make sure they exists
-with open(path_raw, "w", encoding="utf-8") as f:
-    f.close()
-
-with open(path_translated, "w", encoding="utf-8") as f:
-    f.close()
+FileSanity(path_raw)
+FileSanity(path_translated)
 
 # current line qty in file
 lineHead = 0
@@ -253,7 +256,6 @@ def ScriptLockToggle(state):
         os.remove(lockFileName)
 
     print("lock:" + str(state))
-
 
 # https://www.geeksforgeeks.org/python/detect-script-exit-in-python/
 @atexit.register

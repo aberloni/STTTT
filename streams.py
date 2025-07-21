@@ -98,22 +98,25 @@ class MicrophoneStream:
 
             # wipe previous data with new chunk
             data = [chunk]
-
+            
             # Now consume whatever other data's still buffered.
             while True:
                 try:
                     chunk = self._buff.get(block=False)
                     
                     if chunk is None:
+                        print("audio.failed chunk is None")
                         return
                     
                     #print("data.append.chunk")
                     data.append(chunk)
+
                 except queue.Empty:
                     #print("queue.empty")
                     break
             
             # https://stackoverflow.com/questions/6269765/what-does-the-b-character-do-in-front-of-a-string-literal
+            # b => a sequence of bytes
             yield b"".join(data)
         
         print("audio.stream.closed")
