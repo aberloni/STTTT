@@ -122,3 +122,18 @@ Limitations
 Installation issues
 
 macos & pyaudio : https://stackoverflow.com/questions/33851379/how-to-install-pyaudio-on-mac-using-python-3
+
+# Documentation
+
+
+# https://en.wikipedia.org/wiki/IETF_language_tag#List_of_common_primary_language_subtags
+# https://py-googletrans.readthedocs.io/en/latest/#googletrans.models.Translated
+
+# Models
+# https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig
+
+# ONLY for EN
+# latest_long : Best for long form content like media or conversation.
+
+# googletrans result is unicode utf-8
+# https://py-googletrans.readthedocs.io/en/latest/
