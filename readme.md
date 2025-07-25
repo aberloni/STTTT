@@ -137,3 +137,6 @@ macos & pyaudio : https://stackoverflow.com/questions/33851379/how-to-install-py
 
 # googletrans result is unicode utf-8
 # https://py-googletrans.readthedocs.io/en/latest/
+
+# speech.result
+# https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative

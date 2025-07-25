@@ -7,3 +7,5 @@ LANG_TRANSL_DEST = "fr"
 
 # MICROPHONE INDEX
 AUDIO_DEVICE_INDEX = 2
+
+print("audio.slot #"+str(AUDIO_DEVICE_INDEX))

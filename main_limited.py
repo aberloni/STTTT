@@ -2,63 +2,16 @@ import re
 
 from google.cloud import speech
 
-import googletrans
-
 import asyncio
 
-import conf
+import streams
+
 import languages
 
-import streams
-import os
+import conf,statics
+import LiveBuffer, Lock
 
-import atexit
-
-# Audio recording parameters
-#RATE = 16000
-#CHUNK = int(RATE / 10)  # 100ms
-
-import datetime
-
-today = datetime.datetime.today().strftime(conf.FILE_DATE_FORMAT)
-
-path_raw = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_RAW + conf.FILE_EXT
-path_translated = conf.OUTPUT_FOLDER + today + "_" + conf.OUTPUT_TRANSLATED + conf.FILE_EXT
-
-""" make sure file & parent folder exists """
-def FileSanity(path):
-    print("sanity check file @ "+path)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        f.close()
-
-# https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function
-
-# first wipe files &/OR make sure they exists
-FileSanity(path_raw)
-FileSanity(path_translated)
-
-# current line qty in file
-lineHead = 0
-with open(path_raw, "r", encoding="utf-8") as f:
-    lines = f.readlines()
-
-    print(lines)
-
-    lineHead = len(lines) - 1
-
-    if lineHead < 0 : 
-        lineHead = 0
-
-    print("head starts @ "+str(lineHead))
-
-    f.close()
-
-open(path_translated, "a+", encoding="utf-8").close()
-
-print("head @ "+str(lineHead))
-
-print("audio.slot #"+str(conf.AUDIO_DEVICE_INDEX))
+LiveBuffer.InitBuffer()
 
 """ 
     given responses object is a StreamingResponseIterator
@@ -67,9 +20,6 @@ print("audio.slot #"+str(conf.AUDIO_DEVICE_INDEX))
 """
 def listen_print_loop(responses: object) -> str:
     
-    num_chars_printed = 0
-    words_count = 0
-
     global lineHead
     
     print("listen.start")
@@ -102,17 +52,13 @@ def listen_print_loop(responses: object) -> str:
         # RESULT DOCUMENTATION
         # https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative
 
-        """ kill script is lock file is removed by something else """
-        if not CheckLockPresence():
-            print("/! script lock missing")
-            ApplicationQuit()
-            return
+        if(Lock.CheckAppStop()): return
 
         if not result.is_final:
             
             # print("x"+str(len(result.alternatives)) + " " + str(alt.confidence) + " > " + line)
 
-            transcriptOverride(path_raw, line, lineHead)
+            LiveBuffer.OverrideTranscript(line)
 
             num_chars_printed = len(transcript)
 
@@ -120,26 +66,27 @@ def listen_print_loop(responses: object) -> str:
             sps = line.split()
             cnt = len(sps)
             if cnt > words_count:
-                if cnt % conf.SPLIT_WORD_COUNT == 0:
+                if cnt % statics.SPLIT_WORD_COUNT == 0:
                     words_count = cnt
                     
                     #print("count ? "+str(words_count)+" = "+line)
                     
-                    asyncio.run(TranslateText(line, lineHead))
+                    asyncio.run(LiveBuffer.TranslateText(line))
                     
         else: # FINAL
 
-            if conf.CAN_STOP:
+            if statics.CAN_STOP:
+                
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
-                pattern = conf.STOP
+                pattern = statics.STOP
                 stopped = re.search(r"("+pattern+")", transcript, re.I)
-                #if re.search(r"\b("+conf.STOP+")\b", transcript, re.I):
+
                 if stopped:
                     
                     print("[command.exit]")
                     
-                    ApplicationQuit() # release lock
+                    Lock.ApplicationQuit() # release lock
 
                     break
             
@@ -147,48 +94,15 @@ def listen_print_loop(responses: object) -> str:
 
             print(" . "+line) #is final !
             
-            transcriptOverride(path_raw, line, lineHead)
-            asyncio.run(TranslateText(line, lineHead))
+            LiveBuffer.OverrideTranscript(line)
+            asyncio.run(LiveBuffer.TranslateText(line))
             
-            lineHead = lineHead + 1
-            print("head @ "+str(lineHead))
+            LiveBuffer.IncrementHead()
             
-            words_count = 0
-            num_chars_printed = 0
 
     print("listen.stop")
     return transcript
 
-
-def transcriptOverride(fname, line, lineIndex):
-
-    # remove empty spaces
-    line = line.strip()
-    if len(line) <= 0:
-        return
-
-    with open(fname, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        f.close()
-
-    while len(lines) <= lineIndex:
-        lines.append("")
-    
-    lines[lineIndex] = line + "\n"
-    
-    with open(fname, "w", encoding="utf-8") as f:
-        
-        f.writelines(lines)
-        f.close()
-
-
-async def TranslateText(line, lineIndex):
-    async with googletrans.Translator() as tr:
-        loca = await tr.translate(text=line, 
-                                  src=googletrans.LANGUAGES[languages.LANG_TRANSL_SRC], 
-                                  dest=googletrans.LANGUAGES[languages.LANG_TRANSL_DST])
-
-        transcriptOverride(path_translated, loca.text, lineIndex)
 
 # "-> None" ? https://stackoverflow.com/questions/38286718/what-does-def-main-none-do
 
@@ -207,7 +121,7 @@ def main() -> None:
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=conf.RATE,
+        sample_rate_hertz=statics.RATE,
         language_code=languages.LANG,
         model="latest_long",
         #model="latest_short",
@@ -224,9 +138,9 @@ def main() -> None:
     )
 
     # set lock
-    ScriptLockToggle(True)
+    Lock.ScriptLockToggle(True)
 
-    with streams.MicrophoneStream(conf.RATE, conf.CHUNK) as stream:
+    with streams.MicrophoneStream(statics.RATE, statics.CHUNK) as stream:
         
         audio_generator = stream.generator() # while stream not closed
 
@@ -243,29 +157,6 @@ def main() -> None:
 
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
-
-""" true : lock is present """
-def CheckLockPresence():
-    lockFileName = "lock" + conf.FILE_EXT
-    return os.path.exists(lockFileName)
-
-""" toggle script lock """
-def ScriptLockToggle(state):
-    lockFileName = "lock" + conf.FILE_EXT
-    if state:
-        open(lockFileName, "w").close()
-    else:
-        os.remove(lockFileName)
-
-    print("lock:" + str(state))
-
-# https://www.geeksforgeeks.org/python/detect-script-exit-in-python/
-@atexit.register
-def ApplicationQuit():
-    print("[QUIT]")
-    
-    if CheckLockPresence():
-        ScriptLockToggle(False)
 
 if __name__ == "__main__":
     main()

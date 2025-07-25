@@ -1,28 +1,27 @@
 import queue, re, sys, time
 from google.cloud import speech
 import pyaudio
-import conf
+import conf, statics
 
-STREAMING_LIMIT = 240000
-SAMPLE_RATE = 16000
-CHUNK_SIZE = int(SAMPLE_RATE / 10)
+import Lock, LiveBuffer
 
 LANG = conf.LANG
 INDEX_MIC = conf.AUDIO_DEVICE_INDEX
 
 class LiveTranscriber:
     def __init__(self):
+
         self.client = speech.SpeechClient()
         self.config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=SAMPLE_RATE,
+            sample_rate_hertz=statics.SAMPLE_RATE,
             language_code=LANG,
             max_alternatives=1,
         )
         self.streaming_config = speech.StreamingRecognitionConfig(
             config=self.config, interim_results=True
         )
-        self.mic = self.ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
+        self.mic = self.ResumableMicrophoneStream(statics.SAMPLE_RATE, statics.CHUNK_SIZE)
 
     class ResumableMicrophoneStream:
         def __init__(self, rate, chunk_size):
@@ -59,7 +58,7 @@ class LiveTranscriber:
             while not self.closed:
                 data=[]
                 if self.new_stream and self.last_audio_input:
-                    chunk_time=STREAMING_LIMIT/len(self.last_audio_input)
+                    chunk_time=statics.STREAMING_LIMIT/len(self.last_audio_input)
                     if chunk_time:
                         if self.bridging_offset<0: self.bridging_offset=0
                         if self.bridging_offset>self.final_request_end_time: self.bridging_offset=self.final_request_end_time
@@ -81,8 +80,11 @@ class LiveTranscriber:
                 yield b"".join(data)
 
     def listen_print_loop(self,responses,stream):
+        
+        print("listen.loop.start")
+
         for response in responses:
-            if self._time()-stream.start_time>STREAMING_LIMIT:
+            if self._time()-stream.start_time>statics.STREAMING_LIMIT:
                 stream.start_time=self._time();break
             if not response.results:continue
             result=response.results[0]
@@ -92,24 +94,46 @@ class LiveTranscriber:
             if result.result_end_time.seconds: rs=result.result_end_time.seconds
             if result.result_end_time.microseconds: rm=result.result_end_time.microseconds
             stream.result_end_time=int((rs*1000)+(rm/1000))
-            corrected=stream.result_end_time - stream.bridging_offset + (STREAMING_LIMIT*stream.restart_counter)
+            corrected=stream.result_end_time - stream.bridging_offset + (statics.STREAMING_LIMIT*stream.restart_counter)
+
+            if(Lock.CheckAppStop()): return
+            
             if result.is_final:
                 
                 print("."+transcript)
 
+                LiveBuffer.OverrideTranscript(transcript)
+                LiveBuffer.DoTranslate(transcript)
+
+                # this also reset word count for delayed translation
+                LiveBuffer.IncrementHead()
+                
                 stream.is_final_end_time=stream.result_end_time
                 stream.last_transcript_was_final=True
-                if re.search(r"\b(exit|quit)\b",transcript,re.I): print("Exiting...");stream.closed=True;break
+                
+                if statics.CAN_STOP:
+                    if re.search(r"\b(exit|quit)\b",transcript,re.I): 
+                        print("Exiting...")
+                        stream.closed=True
+                        Lock.ApplicationQuit()
+                        break
+                
             else:
                 
+                LiveBuffer.OverrideTranscript(transcript)
                 print(">"+transcript)
                 
+                LiveBuffer.TranscriptSolve(transcript)
+
                 stream.last_transcript_was_final=False
 
     def run(self):
+        
+        Lock.ScriptLockToggle(True)
+
         with self.mic as stream:
             while not stream.closed:
-                print(f"\n{STREAMING_LIMIT*stream.restart_counter}: NEW REQUEST")
+                print(f"\n{statics.STREAMING_LIMIT*stream.restart_counter}: NEW REQUEST")
                 stream.audio_input=[]
                 audio_generator=stream.generator()
                 requests=(speech.StreamingRecognizeRequest(audio_content=c) for c in audio_generator)
