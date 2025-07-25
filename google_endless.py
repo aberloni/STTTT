@@ -4,8 +4,6 @@ import re
 import sys
 import time
 
-import conf
-
 from google.cloud import speech
 import pyaudio
 
@@ -72,7 +70,7 @@ class ResumableMicrophoneStream:
             # This is necessary so that the input device's buffer doesn't
             # overflow while the calling thread makes network requests, etc.
             stream_callback=self._fill_buffer,
-            input_device_index=conf.AUDIO_DEVICE_INDEX
+            #input_device_index=AUDIO_INDEX
         )
 
     def __enter__(self: object) -> object:

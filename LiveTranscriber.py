@@ -1,12 +1,9 @@
 import queue, re, sys, time
 from google.cloud import speech
 import pyaudio
-import conf, statics
+import ConfAudio, ConfLanguages, statics
 
 import Lock, LiveBuffer
-
-LANG = conf.LANG
-INDEX_MIC = conf.AUDIO_DEVICE_INDEX
 
 class LiveTranscriber:
     def __init__(self):
@@ -15,7 +12,7 @@ class LiveTranscriber:
         self.config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=statics.SAMPLE_RATE,
-            language_code=LANG,
+            language_code=ConfLanguages.LANG,
             max_alternatives=1,
         )
         self.streaming_config = speech.StreamingRecognitionConfig(
@@ -48,7 +45,7 @@ class LiveTranscriber:
                 input=True,
                 frames_per_buffer=self.chunk_size,
                 stream_callback=self._fill_buffer,
-                input_device_index=INDEX_MIC
+                input_device_index=ConfAudio.AUDIO_DEVICE_INDEX
             )
         def _time(self): return int(round(time.time() * 1000))
         def __enter__(self): self.closed=False;return self
@@ -96,7 +93,10 @@ class LiveTranscriber:
             stream.result_end_time=int((rs*1000)+(rm/1000))
             corrected=stream.result_end_time - stream.bridging_offset + (statics.STREAMING_LIMIT*stream.restart_counter)
 
-            if(Lock.CheckAppStop()): return
+            if not Lock.CheckLockPresence():
+                stream.closed = True
+                Lock.ApplicationQuit()
+                return
             
             if result.is_final:
                 

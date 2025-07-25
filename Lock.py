@@ -1,7 +1,5 @@
 import statics
-import os
-
-import atexit
+import os, sys
 
 """ true : lock is present """
 def CheckLockPresence():
@@ -31,8 +29,13 @@ def CheckAppStop():
 
 
 # https://www.geeksforgeeks.org/python/detect-script-exit-in-python/
-@atexit.register
 def ApplicationQuit():
+
     print("[QUIT]")
+
+    # remove lock if present
     if CheckLockPresence():
         ScriptLockToggle(False)
+
+    print(" > exit()")
+    sys.exit()

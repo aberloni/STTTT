@@ -1,9 +1,11 @@
 import os
-import statics
+
 import datetime
 import asyncio
 
-import languages, googletrans
+import googletrans
+
+import statics, ConfLanguages
 
 today = datetime.datetime.today().strftime(statics.FILE_DATE_FORMAT)
 
@@ -11,7 +13,6 @@ path_raw = statics.OUTPUT_FOLDER + today + "_" + statics.OUTPUT_RAW + statics.FI
 path_translated = statics.OUTPUT_FOLDER + today + "_" + statics.OUTPUT_TRANSLATED + statics.FILE_EXT
 
 words_count = 0
-
 lineHead = 0
 
 """ 
@@ -119,7 +120,7 @@ def DoTranslate(transcript):
 async def TranslateText(line):
     async with googletrans.Translator() as tr:
         loca = await tr.translate(text=line, 
-                                  src=googletrans.LANGUAGES[languages.LANG_TRANSL_SRC], 
-                                  dest=googletrans.LANGUAGES[languages.LANG_TRANSL_DST])
+                                  src=googletrans.LANGUAGES[ConfLanguages.LANG_TRANSL_SRC], 
+                                  dest=googletrans.LANGUAGES[ConfLanguages.LANG_TRANSL_DST])
 
         OverrideTranslation(loca.text)
