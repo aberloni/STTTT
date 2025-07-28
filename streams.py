@@ -1,12 +1,12 @@
 
 import queue
 import pyaudio
-import conf
+import conf, statics
 
 class MicrophoneStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
 
-    def __init__(self: object, rate: int = conf.RATE, chunk: int = conf.CHUNK) -> None:
+    def __init__(self: object, rate: int = statics.RATE, chunk: int = statics.CHUNK) -> None:
         """The audio -- and generator -- is guaranteed to be on the main thread."""
         self._rate = rate
         self._chunk = chunk

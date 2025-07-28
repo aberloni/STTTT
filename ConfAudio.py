@@ -1,0 +1,4 @@
+# MICROPHONE INDEX
+AUDIO_DEVICE_INDEX = 2
+
+print("audio.slot #"+str(AUDIO_DEVICE_INDEX))
