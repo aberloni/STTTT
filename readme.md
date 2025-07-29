@@ -135,8 +135,16 @@ macos & pyaudio : https://stackoverflow.com/questions/33851379/how-to-install-py
 # ONLY for EN
 # latest_long : Best for long form content like media or conversation.
 
-# googletrans result is unicode utf-8
-# https://py-googletrans.readthedocs.io/en/latest/
+# Googletrans
 
-# speech.result
-# https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative
+possible languages : https://py-googletrans.readthedocs.io/en/latest/#googletrans-languages
+
+googletrans result is unicode utf-8
+https://py-googletrans.readthedocs.io/en/latest/
+
+# Google Speech
+
+possible languages : https://cloud.google.com/speech-to-text/docs/speech-to-text-supported-languages
+
+speech.result
+https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative
