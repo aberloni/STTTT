@@ -1,4 +1,3 @@
 #!/bin/bash
-echo "opening trasnscription"
-cd /Volumes/steve/tamanoir/STTTT
-python3 main.py
+
+osascript -e 'tell application "Terminal" to do script "cd /Volumes/steve/tamanoir/STTTT && python3 main.py"'
