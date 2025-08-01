@@ -1,30 +1,39 @@
 import statics
 import os, sys
 
+lockFileName = "lock" + statics.FILE_EXT
+
 """ true : lock is present """
 def CheckLockPresence():
-    lockFileName = "lock" + statics.FILE_EXT
+    global lockFileName
     return os.path.exists(lockFileName)
+
+def RemLock():
+    global lockFileName
+    if CheckLockPresence:
+        os.remove(lockFileName)
 
 """ toggle script lock """
 def ScriptLockToggle(setLock):
-    lockFileName = "lock" + statics.FILE_EXT
+    global lockFileName
     
-    if setLock and not CheckLockPresence():
-        open(lockFileName, "w").close()
-    elif not setLock:
-        os.remove(lockFileName)
+    hasLock = CheckLockPresence()
 
-    print("lock:" + str(setLock))
+    if setLock and not hasLock:
+        print(" +LOCK")
+        open(lockFileName, "w").close()
+    elif not setLock and hasLock:
+        print(" -LOCK")
+        os.remove(lockFileName)
 
 """ kill script is lock file is removed by something else """
 def CheckAppStop():
 
     if not CheckLockPresence():
-        print("/! script lock missing")
+        print("/! script lock is missing")
         ApplicationQuit()
         return True
-
+    
     return False
 
 

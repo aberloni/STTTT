@@ -1,10 +1,12 @@
-
 import LiveTranscriber
-
-#if __name__=="__main__":stream_gpt.LiveTranscriber(conf.LANG, conf.AUDIO_DEVICE_INDEX).run()
-
 import LiveBuffer
+import Locker
 
+# make sure lock is not present when starting
+Locker.RemLock()
+
+print("init.buffer")
 LiveBuffer.InitBuffer()
 
+print("init.run transcriber")
 LiveTranscriber.LiveTranscriber().run()

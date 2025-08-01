@@ -1,7 +1,7 @@
 
 import queue
 import pyaudio
-import conf, statics
+import ConfAudio, statics
 
 class MicrophoneStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
@@ -27,7 +27,7 @@ class MicrophoneStream:
             # This is necessary so that the input device's buffer doesn't
             # overflow while the calling thread makes network requests, etc.
             stream_callback=self._fill_buffer,
-            input_device_index=conf.AUDIO_DEVICE_INDEX
+            input_device_index=ConfAudio.AUDIO_DEVICE_INDEX
         )
 
         print("audio.stream : started")

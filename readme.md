@@ -148,3 +148,10 @@ possible languages : https://cloud.google.com/speech-to-text/docs/speech-to-text
 
 speech.result
 https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1#speechrecognitionalternative
+
+# Monitoring
+
+Home : https://console.cloud.google.com
+Dashboard : https://console.cloud.google.com/home/dashboard
+Metrics : https://console.cloud.google.com/apis/api/speech.googleapis.com/
+Billing : https://console.cloud.google.com/billing

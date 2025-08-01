@@ -22,6 +22,8 @@ def FileSanity(path):
     print("sanity check file @ "+path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
+        f.write("baseline\n")
+        f.write("altline\n")
         f.close()
 
 # https://stackoverflow.com/questions/1466000/difference-between-modes-a-a-w-w-and-r-in-built-in-open-function
@@ -53,7 +55,6 @@ def InitBuffer():
     open(path_translated, "a+", encoding="utf-8").close()
 
     print("head @ "+str(lineHead))
-    
 
 def OverrideTranscript(line):
     BufferOverride(path_raw, line)

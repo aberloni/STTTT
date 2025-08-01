@@ -3,7 +3,7 @@ from google.cloud import speech
 import pyaudio
 import ConfAudio, ConfLanguages, statics
 
-import Lock, LiveBuffer
+import LiveBuffer, Locker
 
 class LiveTranscriber:
     def __init__(self):
@@ -93,9 +93,9 @@ class LiveTranscriber:
             stream.result_end_time=int((rs*1000)+(rm/1000))
             corrected=stream.result_end_time - stream.bridging_offset + (statics.STREAMING_LIMIT*stream.restart_counter)
 
-            if not Lock.CheckLockPresence():
+            if not Locker.CheckLockPresence():
                 stream.closed = True
-                Lock.ApplicationQuit()
+                Locker.ApplicationQuit()
                 return
             
             if result.is_final:
@@ -115,7 +115,7 @@ class LiveTranscriber:
                     if re.search(r"\b(exit|quit)\b",transcript,re.I): 
                         print("Exiting...")
                         stream.closed=True
-                        Lock.ApplicationQuit()
+                        Locker.ApplicationQuit()
                         break
                 
             else:
@@ -129,7 +129,7 @@ class LiveTranscriber:
 
     def run(self):
         
-        Lock.ScriptLockToggle(True)
+        Locker.ScriptLockToggle(True)
 
         with self.mic as stream:
             while not stream.closed:
