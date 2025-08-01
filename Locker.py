@@ -6,11 +6,13 @@ lockFileName = "lock" + statics.FILE_EXT
 """ true : lock is present """
 def CheckLockPresence():
     global lockFileName
-    return os.path.exists(lockFileName)
+    presence = os.path.exists(lockFileName)
+    return presence
 
 def RemLock():
     global lockFileName
-    if CheckLockPresence:
+    if CheckLockPresence():
+        print("removing "+lockFileName)
         os.remove(lockFileName)
 
 """ toggle script lock """
