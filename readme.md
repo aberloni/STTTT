@@ -106,7 +106,6 @@ https://py-googletrans.readthedocs.io/en/latest/
 
 https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment
 
-
 # Troubleshoot
 
 	google.auth.exceptions.DefaultCredentialsError: Your default credentials were not found
@@ -155,3 +154,19 @@ Home : https://console.cloud.google.com
 Dashboard : https://console.cloud.google.com/home/dashboard
 Metrics : https://console.cloud.google.com/apis/api/speech.googleapis.com/
 Billing : https://console.cloud.google.com/billing
+
+# auth
+
+https://cloud.google.com/iam/docs/service-account-creds
+
+	Using a service account key to sign a JSON Web Token (JWT) and exchange it for an access token
+
+https://cloud.google.com/iam/docs/keys-create-delete#required-permissions
+
+	Required roles
+	To get the permissions that you need to create and delete service account keys, ask your administrator to grant you the Service Account Key Admin (roles/iam.serviceAccountKeyAdmin) IAM role
+	on the project, or the service account whose keys you want to manage. For more information about granting roles, see Manage access to projects, folders, and organizations. 
+
+https://cloud.google.com/iam/docs/service-account-creds#user-managed-keys
+
+	You can create user-managed key pairs for a service account, then use the private key from each key pair to authenticate with Google APIs. This private key is known as a service account key.
