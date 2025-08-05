@@ -19,3 +19,7 @@ STREAMING_LIMIT = 240000
 
 CAN_STOP = True
 STOP = "stop|exit|quitter"
+
+BUFFER_FLD = "buffer/"
+AUDIO_BASE_FILENAME = "buffer"
+AUDIO_EXT = ".wav"
